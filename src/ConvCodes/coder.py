@@ -20,7 +20,7 @@ class Coder:
         self.summator_polynoms = summator_polynoms
 
     def __reset_register_state(self):
-        self.register_state = np.zeros(self.code_len)
+        self.__register_state = np.zeros(self.code_len)
 
     def __update_register_state(self, symbol):
         """
@@ -31,11 +31,17 @@ class Coder:
         Returns:
 
         """
-        self.register_state = np.delete(self.register_state, -1)
-        self.register_state = np.insert(self.register_state, 0, symbol)
+        self.__register_state = np.delete(self.__register_state, -1)
+        self.__register_state = np.insert(self.__register_state, 0, symbol)
 
     def get_register_state(self):
-        return self.register_state
+        return self.__register_state
+
+    def __set_register_state(self, state):
+        assert np.array(state.shape == self.__register_state.shape).all() == True, \
+            "Size of states has to be the same."
+
+        self.__register_state = state
 
     def __get_coder_response(self):
         coder_response = list()
@@ -49,7 +55,7 @@ class Coder:
 
         return coder_response
 
-    def encode(self, input_sequence, reset_register_state=True):
+    def encode(self, input_sequence, reset_register_state=True, register_state=None):
         """
 
         Args:
@@ -61,11 +67,13 @@ class Coder:
         """
         assert len(input_sequence.shape) == 1, \
             "Input sequence has to be one dimensional."
-        uniq_elements = np.unique(input_sequence) == [0, 1]
-        assert uniq_elements.all() == True, \
+        assert (np.unique(input_sequence).any() <= True).all() == True, \
             "Input sequence has to have only binary values."
 
-        if reset_register_state:
+        if reset_register_state and register_state is not None:
+            self.__set_register_state(register_state)
+
+        elif reset_register_state:
             self.__reset_register_state()
 
         sumators_responses = np.zeros((input_sequence.shape[0], self.num_outputs))
